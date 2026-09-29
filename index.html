@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subastas Copart - Examen WebDev 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans p-6">
+
+  <!-- Encabezado / Autenticación -->
+  <header class="flex justify-between items-center bg-white p-4 shadow-sm rounded-lg mb-6 border">
+    <h1 class="text-xl font-bold text-blue-800">🚗 Subastas de Vehículos Copart</h1>
+    <div id="auth-section" class="flex gap-2">
+      <span class="text-sm self-center text-gray-600">Usuario: <strong class="text-blue-600">comprador1@copart.com</strong></span>
+      <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded-md font-semibold">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <!-- Panel de Filtros -->
+  <section class="bg-white p-4 rounded-lg shadow-sm border mb-6">
+    <h2 class="font-bold text-gray-700 mb-3">Filtros Multitarea de Vehículos</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <input type="text" placeholder="Buscar por Marca o Modelo..." class="border p-2 rounded-md w-full text-sm">
+      <select class="border p-2 rounded-md w-full text-sm">
+        <option value="">Tipo de Combustible (Todos)</option>
+        <option value="Gasolina">Gasolina</option>
+        <option value="Diésel">Diésel</option>
+        <option value="Híbrido">Híbrido</option>
+      </select>
+      <select class="border p-2 rounded-md w-full text-sm">
+        <option value="">Estado de Daño (Todos)</option>
+        <option value="Verde">🟢 Verde (Daño Menor)</option>
+        <option value="Amarillo">🟡 Amarillo (Daño Medio)</option>
+        <option value="Rojo">🔴 Rojo (Daño Severo)</option>
+      </select>
+      <button class="bg-slate-800 text-white p-2 rounded-md text-sm font-medium">Aplicar Filtros</button>
+    </div>
+  </section>
+
+  <!-- Subasta y Ficha Técnica -->
+  <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white p-5 rounded-lg shadow-sm border">
+      
+      <!-- Indicador de Daño -->
+      <div class="flex justify-between items-center mb-2">
+        <span class="inline-block bg-green-100 text-green-800 border border-green-300 px-3 py-1 rounded-full text-xs font-bold">🟢 Daño Menor / Limpio</span>
+        <span class="text-xs text-red-600 font-bold">⏱️ Cierra en: 05:32 Min</span>
+      </div>
+
+      <h3 class="text-xl font-bold text-gray-900">Toyota Tacoma SR5 2022</h3>
+      <p class="text-xs text-gray-500 mb-4">Motor 3.5L V6 | Transmisión Automática | Tren 4WD | 6 Cilindros</p>
+
+      <!-- Foto Principal -->
+      <div class="bg-gray-200 h-48 rounded-md mb-4 flex items-center justify-center text-gray-500 text-sm">
+        📷 Carrusel de Imágenes (5 Fotografías del Vehículo)
+      </div>
+
+      <!-- Datos de la Puja -->
+      <div class="bg-slate-100 p-3 rounded-md mb-4">
+        <p class="text-xs text-gray-500">Monto Base de Subasta: <strong class="text-gray-800">Q. 20,000.00</strong></p>
+        <p class="text-lg font-bold text-blue-700">Oferta Actual Más Alta: Q. 22,000.00</p>
+      </div>
+
+      <!-- Indicador Visual en Tiempo Real (Badge) -->
+      <div id="badge-estado" class="bg-green-100 border border-green-400 text-green-800 px-3 py-2 rounded-md mb-4 text-sm font-semibold flex items-center gap-2">
+        <span>✅</span> ¡Vas ganando esta subasta!
+      </div>
+
+      <!-- Formulario de Oferta -->
+      <div class="flex gap-2">
+        <input type="number" placeholder="Monto mínimo Q. 24,200 (+10%)" class="border p-2 rounded-md w-full text-sm">
+        <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-md font-bold text-sm">Ofertar</button>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
