@@ -1,7 +1,7 @@
 # Plataforma de Subastas Copart
 
 ## 🌐 Enlace al Proyecto Desplegado
-- **Sitio Web:**  https://subastas-copart-webdev.vercel.app
+- **Sitio Web:** https://subastas-copart.vercel.app/
 
 ## 🔑 Credenciales 
 - **Usuario 1:** comprador1@copart.com / Password123!
