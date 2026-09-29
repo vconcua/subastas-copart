@@ -11,23 +11,22 @@
   <!-- Header / Autenticación -->
   <header class="flex flex-wrap justify-between items-center bg-white p-4 shadow-sm rounded-lg mb-6 border gap-3">
     <h1 class="text-xl font-bold text-blue-800">🚗 Subastas Copart (Tiempo Real)</h1>
-    <div id="user-info" class="flex items-center gap-3">
+    <div id="user-info" class="flex items-center gap-2">
       <!-- Se renderiza por JS -->
     </div>
   </header>
 
-  <!-- Modal / Ventana de Login -->
+  <!-- MODAL 1: LOGIN -->
   <div id="login-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full border">
       <h2 class="text-lg font-bold mb-3 text-slate-800">Iniciar Sesión</h2>
-      <p class="text-xs text-slate-500 mb-4">Seleccione o ingrese un usuario de prueba:</p>
       
       <div class="mb-3">
-        <label class="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico:</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Seleccionar Usuario o Ingresar Correo:</label>
         <select id="login-email" class="w-full border p-2 rounded text-sm bg-slate-50">
           <option value="comprador1@copart.com">comprador1@copart.com (Comprador A)</option>
           <option value="comprador2@copart.com">comprador2@copart.com (Comprador B)</option>
-          <option value="vendedor1@copart.com">vendedor1@copart.com (Vendedor / Publicador)</option>
+          <option value="vendedor1@copart.com">vendedor1@copart.com (Vendedor)</option>
         </select>
       </div>
 
@@ -36,16 +35,138 @@
         <input type="password" value="Password123!" class="w-full border p-2 rounded text-sm bg-slate-50" readonly>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex gap-2 mb-3">
         <button onclick="ejecutarLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded text-sm font-bold">Ingresar</button>
-        <button onclick="cerrarModalLogin()" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
+        <button onclick="cerrarModal('login-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
       </div>
+      <p class="text-xs text-center text-gray-500">¿No tienes cuenta? <button onclick="cerrarModal('login-modal'); abrirModal('registro-modal');" class="text-blue-600 underline font-bold">Regístrate aquí</button></p>
+    </div>
+  </div>
+
+  <!-- MODAL 2: REGISTRO DE NUEVO COMPRADOR / USUARIO -->
+  <div id="registro-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full border max-h-[90vh] overflow-y-auto">
+      <h2 class="text-lg font-bold mb-3 text-slate-800">Registro de Nuevo Comprador/Usuario</h2>
+      <form onsubmit="registrarUsuario(event)">
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Nombre:</label>
+            <input id="reg-nombre" type="text" required class="w-full border p-2 rounded text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Apellido:</label>
+            <input id="reg-apellido" type="text" required class="w-full border p-2 rounded text-sm">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico:</label>
+          <input id="reg-email" type="email" required placeholder="correo@ejemplo.com" class="w-full border p-2 rounded text-sm">
+        </div>
+        <div class="mb-3">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Teléfono:</label>
+          <input id="reg-telefono" type="tel" required placeholder="+502 1234-5678" class="w-full border p-2 rounded text-sm">
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña Segura:</label>
+          <input id="reg-password" type="password" required class="w-full border p-2 rounded text-sm">
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded text-sm font-bold">Crear Cuenta</button>
+          <button type="button" onclick="cerrarModal('registro-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: PUBLICAR NUEVO VEHÍCULO (FICHA TÉCNICA) -->
+  <div id="publicar-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full border max-h-[90vh] overflow-y-auto">
+      <h2 class="text-lg font-bold mb-3 text-slate-800">Publicar Vehículo para Subasta</h2>
+      <form onsubmit="publicarVehiculo(event)">
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Marca:</label>
+            <input id="pub-marca" type="text" required placeholder="Ej. Nissan" class="border p-2 rounded text-sm w-full">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Modelo:</label>
+            <input id="pub-modelo" type="text" required placeholder="Ej. Frontier" class="border p-2 rounded text-sm w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Año:</label>
+            <input id="pub-anio" type="number" required value="2021" class="border p-2 rounded text-sm w-full">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Motor:</label>
+            <input id="pub-motor" type="text" required placeholder="Ej. 2.5L" class="border p-2 rounded text-sm w-full">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Cilindros:</label>
+            <input id="pub-cilindros" type="number" required value="4" class="border p-2 rounded text-sm w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Transmisión:</label>
+            <select id="pub-transmision" class="border p-2 rounded text-sm w-full">
+              <option value="Automática">Automática</option>
+              <option value="Manual">Manual</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Combustible:</label>
+            <select id="pub-combustible" class="border p-2 rounded text-sm w-full">
+              <option value="Gasolina">Gasolina</option>
+              <option value="Diésel">Diésel</option>
+              <option value="Híbrido">Híbrido</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Tren Manejo:</label>
+            <select id="pub-tren" class="border p-2 rounded text-sm w-full">
+              <option value="4WD">4WD</option>
+              <option value="AWD">AWD</option>
+              <option value="FWD">FWD</option>
+              <option value="RWD">RWD</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Estado de Daño:</label>
+            <select id="pub-dano" class="border p-2 rounded text-sm w-full">
+              <option value="🟢 Verde">🟢 Verde (Daño Menor / Limpio)</option>
+              <option value="🟡 Amarillo">🟡 Amarillo (Daño Medio / Reparable)</option>
+              <option value="🔴 Rojo">🔴 Rojo (Daño Severo / Salvamento)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Precio Base (Q.):</label>
+            <input id="pub-monto" type="number" min="1000" required value="20000" class="border p-2 rounded text-sm w-full">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="block text-xs font-bold text-gray-700 mb-1">URL Fotografía Principal:</label>
+          <input id="pub-img" type="url" required value="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500" class="border p-2 rounded text-sm w-full">
+        </div>
+
+        <div class="flex gap-2 mt-4">
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded text-sm font-bold">Publicar Vehículo</button>
+          <button type="button" onclick="cerrarModal('publicar-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
+        </div>
+      </form>
     </div>
   </div>
 
   <!-- Panel de Filtros Multitarea -->
   <section class="bg-white p-4 rounded-lg shadow-sm border mb-6">
-    <h2 class="font-bold text-gray-700 mb-3 text-sm">Filtros Multitarea</h2>
+    <h2 class="font-bold text-gray-700 mb-3 text-sm">Filtros Multitarea de Vehículos</h2>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
       <input id="filter-text" type="text" placeholder="Buscar por marca o modelo..." class="border p-2 rounded-md text-sm">
       <select id="filter-combust" class="border p-2 rounded-md text-sm">
@@ -70,7 +191,13 @@
   </main>
 
   <script>
-    // 1. ESTADO GLOBAL (Inicia como Anónimo / No Autenticado por defecto)
+    // 1. ESTADO GLOBAL Y USUARIOS REGISTRADOS
+    let usuariosRegistrados = [
+      { email: "comprador1@copart.com", nombre: "Juan" },
+      { email: "comprador2@copart.com", nombre: "Maria" },
+      { email: "vendedor1@copart.com", nombre: "Carlos" }
+    ];
+
     let usuarioActual = { logueado: false, email: "" };
 
     let vehiculos = [
@@ -112,34 +239,54 @@
       }
     ];
 
-    // 2. GESTIÓN DE AUTENTICACIÓN Y MODAL
+    // 2. FUNCIONES DE MODALES
+    function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // 3. RENDERIZAR AUTENTICACIÓN
     function renderAuth() {
       const container = document.getElementById('user-info');
       if (usuarioActual.logueado) {
         container.innerHTML = `
-          <span class="text-xs md:text-sm text-gray-600">Usuario: <strong class="text-blue-600">${usuarioActual.email}</strong></span>
+          <span class="text-xs text-gray-600 hidden sm:inline">Usuario: <strong class="text-blue-600">${usuarioActual.email}</strong></span>
+          <button onclick="abrirModal('publicar-modal')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-xs rounded-md font-semibold">➕ Publicar Vehículo</button>
           <button onclick="cerrarSesion()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 text-xs rounded-md font-semibold">Cerrar Sesión</button>
         `;
       } else {
         container.innerHTML = `
-          <span class="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">Visitante Anónimo (Solo Lectura)</span>
-          <button onclick="abrirModalLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 text-xs rounded-md font-semibold">Iniciar Sesión</button>
+          <button onclick="abrirModal('registro-modal')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs rounded-md font-semibold">Regístrate</button>
+          <button onclick="abrirModal('login-modal')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs rounded-md font-semibold">Iniciar Sesión</button>
         `;
       }
-    }
-
-    function abrirModalLogin() {
-      document.getElementById('login-modal').classList.remove('hidden');
-    }
-
-    function cerrarModalLogin() {
-      document.getElementById('login-modal').classList.add('hidden');
     }
 
     function ejecutarLogin() {
       const selEmail = document.getElementById('login-email').value;
       usuarioActual = { logueado: true, email: selEmail };
-      cerrarModalLogin();
+      cerrarModal('login-modal');
+      renderAuth();
+      renderCatalogo();
+    }
+
+    function registrarUsuario(e) {
+      e.preventDefault();
+      const nombre = document.getElementById('reg-nombre').value;
+      const email = document.getElementById('reg-email').value;
+
+      usuariosRegistrados.push({ email, nombre });
+
+      // Iniciar sesión con la nueva cuenta creada
+      usuarioActual = { logueado: true, email: email };
+      
+      // Agregar al selector desplegable de login
+      const sel = document.getElementById('login-email');
+      const opt = document.createElement('option');
+      opt.value = email;
+      opt.innerText = `${email} (${nombre})`;
+      sel.appendChild(opt);
+
+      alert(`¡Cuenta creada con éxito para ${nombre}! Ha iniciado sesión automáticamente.`);
+      cerrarModal('registro-modal');
       renderAuth();
       renderCatalogo();
     }
@@ -150,29 +297,66 @@
       renderCatalogo();
     }
 
-    // 3. RENDERIZADO DEL CATÁLOGO
+    // 4. PUBLICAR NUEVO VEHÍCULO
+    function publicarVehiculo(e) {
+      e.preventDefault();
+      const marca = document.getElementById('pub-marca').value;
+      const modelo = document.getElementById('pub-modelo').value;
+      const anio = parseInt(document.getElementById('pub-anio').value);
+      const motor = document.getElementById('pub-motor').value;
+      const cilindros = parseInt(document.getElementById('pub-cilindros').value);
+      const transmision = document.getElementById('pub-transmision').value;
+      const combustible = document.getElementById('pub-combustible').value;
+      const tren = document.getElementById('pub-tren').value;
+      const danoVal = document.getElementById('pub-dano').value;
+      const montoBase = parseFloat(document.getElementById('pub-monto').value);
+      const img = document.getElementById('pub-img').value;
+
+      let danoTexto = "Daño Menor / Limpio";
+      if (danoVal.includes("Amarillo")) danoTexto = "Daño Medio / Reparable";
+      if (danoVal.includes("Rojo")) danoTexto = "Daño Severo / Salvamento";
+
+      const nuevoVehiculo = {
+        id: vehiculos.length + 1,
+        marca, modelo, anio, motor, transmision, combustible, tren, cilindros,
+        dano: danoVal,
+        danoTexto,
+        montoBase,
+        ofertaActual: montoBase,
+        ganadorActual: "",
+        tiempoRestanteSec: 600, // 10 Minutos
+        imagenes: [img]
+      };
+
+      vehiculos.unshift(nuevoVehiculo);
+      alert("¡Vehículo publicado en el inventario de subastas con éxito!");
+      cerrarModal('publicar-modal');
+      renderCatalogo();
+    }
+
+    // 5. RENDERIZAR CATÁLOGO Y REGLAS DE NEGOCIO
     function renderCatalogo(lista = vehiculos) {
       const container = document.getElementById('catalogo-container');
       container.innerHTML = "";
 
       lista.forEach(item => {
-        const minValida = Math.ceil(item.ofertaActual * 1.10);
+        const minValida = item.ofertaActual === item.montoBase && item.ganadorActual === "" 
+          ? item.montoBase 
+          : Math.ceil(item.ofertaActual * 1.10);
 
-        // Indicador Visual (Badge)
         let badgeHtml = "";
         if (usuarioActual.logueado) {
           if (item.ganadorActual === usuarioActual.email) {
             badgeHtml = `<div class="bg-green-100 border border-green-400 text-green-800 px-3 py-2 rounded-md my-3 text-xs font-bold flex items-center gap-1">
               <span>✅</span> ¡Vas ganando esta subasta!
             </div>`;
-          } else {
+          } else if (item.ganadorActual !== "") {
             badgeHtml = `<div class="bg-red-100 border border-red-400 text-red-800 px-3 py-2 rounded-md my-3 text-xs font-bold flex items-center gap-1">
               <span>⚠️</span> Tu oferta ha sido superada. ¡Haz tu oferta ahora!
             </div>`;
           }
         }
 
-        // Formulario de Oferta
         let formOferta = "";
         if (item.tiempoRestanteSec <= 0) {
           formOferta = `<div class="bg-gray-200 text-gray-700 p-2 text-center rounded font-bold text-sm">OFERTA CERRADA</div>`;
@@ -184,21 +368,21 @@
             </div>
           `;
         } else {
-          formOferta = `<p class="text-xs text-center text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">Debe <button onclick="abrirModalLogin()" class="underline font-bold text-blue-700">Iniciar Sesión</button> para poder ofertar.</p>`;
+          formOferta = `<p class="text-xs text-center text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">Debe <button onclick="abrirModal('login-modal')" class="underline font-bold text-blue-700">Iniciar Sesión</button> para ofertar.</p>`;
         }
 
         const card = document.createElement('div');
         card.className = "bg-white p-5 rounded-lg shadow-sm border";
         card.innerHTML = `
           <div class="flex justify-between items-center mb-2">
-            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold border ${item.dano.includes('Verde') ? 'bg-green-100 text-green-800 border-green-300' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}">
+            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold border ${item.dano.includes('Verde') ? 'bg-green-100 text-green-800 border-green-300' : item.dano.includes('Amarillo') ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-red-100 text-red-800 border-red-300'}">
               ${item.dano} - ${item.danoTexto}
             </span>
             <span class="text-xs text-red-600 font-bold">⏱️ Tiempo: <span id="timer-${item.id}">${formatTime(item.tiempoRestanteSec)}</span></span>
           </div>
 
           <h3 class="text-lg font-bold text-gray-900">${item.marca} ${item.modelo} ${item.anio}</h3>
-          <p class="text-xs text-gray-500 mb-3">Motor: ${item.motor} | Transmisión: ${item.transmision} | Combustible: ${item.combustible} | ${item.tren} (${item.cilindros} Cil.)</p>
+          <p class="text-xs text-gray-500 mb-3">Motor: ${item.motor} | Transmisión: ${item.transmision} | Combustible: ${item.combustible} | Tren: ${item.tren} (${item.cilindros} Cil.)</p>
 
           <img src="${item.imagenes[0]}" alt="${item.modelo}" class="w-full h-44 object-cover rounded-md mb-3">
 
@@ -214,12 +398,15 @@
       });
     }
 
-    // 4. LÓGICA DE PUJA (+10%)
+    // 6. REALIZAR OFERTA DE SUBASTA
     function realizarOferta(id) {
       const v = vehiculos.find(x => x.id === id);
       const input = document.getElementById(`input-oferta-${id}`);
       const monto = parseFloat(input.value);
-      const minValido = v.ofertaActual * 1.10;
+
+      const minValido = v.ofertaActual === v.montoBase && v.ganadorActual === ""
+        ? v.montoBase
+        : v.ofertaActual * 1.10;
 
       if (isNaN(monto)) return alert("Por favor ingrese un monto válido.");
       if (monto < v.montoBase) return alert(`La oferta no puede ser menor al precio base (Q. ${v.montoBase.toLocaleString()}).`);
@@ -231,7 +418,7 @@
       renderCatalogo();
     }
 
-    // 5. FILTROS
+    // 7. FILTROS MULTITAREA
     function filtrarVehiculos() {
       const txt = document.getElementById('filter-text').value.toLowerCase();
       const comb = document.getElementById('filter-combust').value;
@@ -247,7 +434,7 @@
       renderCatalogo(filtrados);
     }
 
-    // 6. RELOJ EN TIEMPO REAL
+    // 8. TEMPORIZADOR
     function formatTime(sec) {
       if (sec <= 0) return "CERRADO";
       const m = Math.floor(sec / 60);
@@ -265,7 +452,7 @@
       });
     }, 1000);
 
-    // Inicialización (Comienza en modo anónimo)
+    // Inicialización
     renderAuth();
     renderCatalogo();
   </script>
