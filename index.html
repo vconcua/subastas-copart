@@ -24,15 +24,8 @@
       <div class="mb-3">
         <label class="block text-xs font-bold text-gray-700 mb-1">Seleccionar Usuario de Prueba:</label>
         <select id="login-email" class="w-full border p-2 rounded text-sm bg-slate-50">
-          <option value="comprador1@copart.com">comprador1@copart.com (Comprador A)</option>
-          <option value="comprador2@copart.com">comprador2@copart.com (Comprador B)</option>
-          <option value="vendedor1@copart.com">vendedor1@copart.com (Vendedor)</option>
+          <!-- Opciones dinámicas cargadas desde localStorage sin guardar contraseñas -->
         </select>
-      </div>
-
-      <div class="mb-4">
-        <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña:</label>
-        <input type="password" value="Password123!" class="w-full border p-2 rounded text-sm bg-slate-50" readonly>
       </div>
 
       <div class="flex gap-2 mb-3">
@@ -43,7 +36,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: REGISTRO DE NUEVO COMPRADOR -->
+  <!-- MODAL 2: REGISTRO DE NUEVO COMPRADOR (SIN ALMACENAR CONTRASEÑA) -->
   <div id="registro-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full border max-h-[90vh] overflow-y-auto">
       <h2 class="text-lg font-bold mb-3 text-slate-800">Registro de Nuevo Comprador/Usuario</h2>
@@ -66,11 +59,7 @@
           <label class="block text-xs font-bold text-gray-700 mb-1">Teléfono:</label>
           <input id="reg-telefono" type="tel" required placeholder="+502 1234-5678" class="w-full border p-2 rounded text-sm">
         </div>
-        <div class="mb-4">
-          <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña Segura:</label>
-          <input id="reg-password" type="password" required class="w-full border p-2 rounded text-sm">
-        </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 mt-4">
           <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded text-sm font-bold">Crear Cuenta</button>
           <button type="button" onclick="cerrarModal('registro-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
         </div>
@@ -78,7 +67,7 @@
     </div>
   </div>
 
-  <!-- MODAL 3: PUBLICAR NUEVO VEHÍCULO CON 5 FOTOS -->
+  <!-- MODAL 3: PUBLICAR NUEVO VEHÍCULO -->
   <div id="publicar-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full border max-h-[90vh] overflow-y-auto">
       <h2 class="text-lg font-bold mb-3 text-slate-800">Publicar Vehículo para Subasta</h2>
@@ -151,7 +140,7 @@
           </div>
         </div>
 
-        <!-- 5 URLs DE FOTOS OBLIGATORIAS -->
+        <!-- 5 FOTOS -->
         <div class="mb-3">
           <label class="block text-xs font-bold text-gray-700 mb-1">Galería (5 Fotografías - URLs):</label>
           <input id="pub-img1" type="url" required value="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500" class="border p-1.5 rounded text-xs w-full mb-1">
@@ -169,7 +158,7 @@
     </div>
   </div>
 
-  <!-- Panel de Filtros Multitarea -->
+  <!-- Panel de Filtros -->
   <section class="bg-white p-4 rounded-lg shadow-sm border mb-6">
     <h2 class="font-bold text-gray-700 mb-3 text-sm">Filtros Multitarea de Vehículos</h2>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -192,20 +181,18 @@
 
   <!-- Contenedor Principal de Catálogo -->
   <main id="catalogo-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Se genera dinámicamente con JS -->
+    <!-- Se genera dinámicamente -->
   </main>
 
   <script>
-    // 1. ESTADO GLOBAL
-    let usuariosRegistrados = [
-      { email: "comprador1@copart.com", nombre: "Juan" },
-      { email: "comprador2@copart.com", nombre: "Maria" },
-      { email: "vendedor1@copart.com", nombre: "Carlos" }
+    // DATOS INICIALES (SOLO NOMBRE Y EMAIL)
+    const defaultUsuarios = [
+      { email: "comprador1@copart.com", nombre: "Juan Pérez" },
+      { email: "comprador2@copart.com", nombre: "María López" },
+      { email: "vendedor1@copart.com", nombre: "Carlos Gómez" }
     ];
 
-    let usuarioActual = { logueado: false, email: "" };
-
-    let vehiculos = [
+    const defaultVehiculos = [
       {
         id: 1,
         marca: "Toyota",
@@ -222,7 +209,7 @@
         ofertaActual: 22000,
         ganadorActual: "comprador1@copart.com",
         publicador: "vendedor1@copart.com",
-        tiempoRestanteSec: 300,
+        tiempoRestanteSec: 600,
         fotoIndex: 0,
         imagenes: [
           "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500",
@@ -248,7 +235,7 @@
         ofertaActual: 40000,
         ganadorActual: "comprador2@copart.com",
         publicador: "vendedor1@copart.com",
-        tiempoRestanteSec: 450,
+        tiempoRestanteSec: 900,
         fotoIndex: 0,
         imagenes: [
           "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?w=500",
@@ -260,11 +247,35 @@
       }
     ];
 
-    // 2. MODALES Y AUTH
+    // CARGAR DESDE LOCALSTORAGE O DEFAULT
+    let usuariosRegistrados = JSON.parse(localStorage.getItem('copart_usuarios')) || defaultUsuarios;
+    let vehiculos = JSON.parse(localStorage.getItem('copart_vehiculos')) || defaultVehiculos;
+    let usuarioActual = JSON.parse(localStorage.getItem('copart_sesion')) || { logueado: false, email: "" };
+
+    function guardarDatos() {
+      // Guarda los perfiles sin almacenar ninguna clave
+      localStorage.setItem('copart_usuarios', JSON.stringify(usuariosRegistrados));
+      localStorage.setItem('copart_vehiculos', JSON.stringify(vehiculos));
+      localStorage.setItem('copart_sesion', JSON.stringify(usuarioActual));
+    }
+
+    // MODALES
     function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+    function actualizarSelectUsuarios() {
+      const sel = document.getElementById('login-email');
+      sel.innerHTML = "";
+      usuariosRegistrados.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.email;
+        opt.innerText = `${u.email} (${u.nombre})`;
+        sel.appendChild(opt);
+      });
+    }
+
     function renderAuth() {
+      actualizarSelectUsuarios();
       const container = document.getElementById('user-info');
       if (usuarioActual.logueado) {
         container.innerHTML = `
@@ -283,26 +294,26 @@
     function ejecutarLogin() {
       const selEmail = document.getElementById('login-email').value;
       usuarioActual = { logueado: true, email: selEmail };
+      guardarDatos();
       cerrarModal('login-modal');
       renderAuth();
       renderCatalogo();
     }
 
+    // REGISTRO SIN GUARDAR CONTRASEÑA
     function registrarUsuario(e) {
       e.preventDefault();
       const nombre = document.getElementById('reg-nombre').value;
+      const apellido = document.getElementById('reg-apellido').value;
       const email = document.getElementById('reg-email').value;
 
-      usuariosRegistrados.push({ email, nombre });
+      // Guarda únicamente los datos públicos/de perfil
+      usuariosRegistrados.push({ email, nombre: `${nombre} ${apellido}` });
       usuarioActual = { logueado: true, email: email };
       
-      const sel = document.getElementById('login-email');
-      const opt = document.createElement('option');
-      opt.value = email;
-      opt.innerText = `${email} (${nombre})`;
-      sel.appendChild(opt);
+      guardarDatos();
 
-      alert(`¡Cuenta creada con éxito! Ha iniciado sesión como ${email}`);
+      alert(`¡Cuenta registrada exitosamente para ${nombre} ${apellido}!`);
       cerrarModal('registro-modal');
       renderAuth();
       renderCatalogo();
@@ -310,11 +321,12 @@
 
     function cerrarSesion() {
       usuarioActual = { logueado: false, email: "" };
+      guardarDatos();
       renderAuth();
       renderCatalogo();
     }
 
-    // 3. PUBLICAR VEHÍCULO CON 5 FOTOS
+    // PUBLICAR VEHÍCULO PERSISTENTE
     function publicarVehiculo(e) {
       e.preventDefault();
       const marca = document.getElementById('pub-marca').value;
@@ -339,7 +351,7 @@
       if (danoVal.includes("Rojo")) danoTexto = "Daño Severo / Salvamento";
 
       const nuevoVehiculo = {
-        id: vehiculos.length + 1,
+        id: Date.now(),
         marca, modelo, anio, motor, transmision, combustible, tren, cilindros,
         dano: danoVal,
         danoTexto,
@@ -347,18 +359,19 @@
         ofertaActual: montoBase,
         ganadorActual: "",
         publicador: usuarioActual.email,
-        tiempoRestanteSec: 600,
+        tiempoRestanteSec: 1200,
         fotoIndex: 0,
         imagenes: [img1, img2, img3, img4, img5]
       };
 
       vehiculos.unshift(nuevoVehiculo);
-      alert("¡Vehículo publicado con éxito con su galería de 5 fotos!");
+      guardarDatos();
+
+      alert("¡Vehículo publicado y guardado exitosamente!");
       cerrarModal('publicar-modal');
       renderCatalogo();
     }
 
-    // 4. CONTROL DEL CARRUSEL DE FOTOS
     function cambiarFoto(id, direccion) {
       const v = vehiculos.find(x => x.id === id);
       if (v) {
@@ -381,19 +394,22 @@
     }
 
     function eliminarVehiculo(id) {
-      if (confirm("¿Está seguro de que desea eliminar este vehículo del catálogo de subastas?")) {
+      if (confirm("¿Desea eliminar este vehículo del catálogo permanente?")) {
         vehiculos = vehiculos.filter(v => v.id !== id);
+        guardarDatos();
         alert("El vehículo ha sido eliminado.");
         renderCatalogo();
       }
     }
 
-    // 5. RENDERIZAR CATÁLOGO CON CARRUSEL
+    // CATÁLOGO
     function renderCatalogo(lista = vehiculos) {
       const container = document.getElementById('catalogo-container');
       container.innerHTML = "";
 
       lista.forEach(item => {
+        if (item.fotoIndex === undefined) item.fotoIndex = 0;
+
         const minValida = item.ofertaActual === item.montoBase && item.ganadorActual === "" 
           ? item.montoBase 
           : Math.ceil(item.ofertaActual * 1.10);
@@ -434,7 +450,6 @@
           btnEliminar = `<button onclick="eliminarVehiculo(${item.id})" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-2 py-1 rounded font-bold">🗑️ Eliminar</button>`;
         }
 
-        // HTML del Carrusel de 5 Fotos
         const fotosThumbnails = item.imagenes.map((imgUrl, idx) => 
           `<img src="${imgUrl}" onclick="seleccionarFotoDirecta(${item.id}, ${idx})" class="w-10 h-8 object-cover rounded cursor-pointer border hover:opacity-80">`
         ).join('');
@@ -455,19 +470,16 @@
           <h3 class="text-lg font-bold text-gray-900">${item.marca} ${item.modelo} ${item.anio}</h3>
           <p class="text-xs text-gray-500 mb-3">Motor: ${item.motor} | Transmisión: ${item.transmision} | Combustible: ${item.combustible} | Tren: ${item.tren} (${item.cilindros} Cil.)</p>
 
-          <!-- CARRUSEL INTERACTIVO -->
-          <div class="relative w-full h-48 bg-slate-900 rounded-md mb-2 overflow-hidden group">
+          <!-- CARRUSEL -->
+          <div class="relative w-full h-48 bg-slate-900 rounded-md mb-2 overflow-hidden">
             <img id="car-img-${item.id}" src="${item.imagenes[item.fotoIndex]}" alt="${item.modelo}" class="w-full h-full object-cover">
-            
             <button onclick="cambiarFoto(${item.id}, -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white p-1.5 rounded-full text-xs font-bold">◀</button>
             <button onclick="cambiarFoto(${item.id}, 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white p-1.5 rounded-full text-xs font-bold">▶</button>
-            
             <span id="car-num-${item.id}" class="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
               ${item.fotoIndex + 1}/${item.imagenes.length}
             </span>
           </div>
 
-          <!-- MINIATURAS DEL CARRUSEL -->
           <div class="flex gap-1 mb-3 overflow-x-auto pb-1">
             ${fotosThumbnails}
           </div>
@@ -484,7 +496,7 @@
       });
     }
 
-    // 6. OFERTAR
+    // OFERTAR
     function realizarOferta(id) {
       const v = vehiculos.find(x => x.id === id);
       const input = document.getElementById(`input-oferta-${id}`);
@@ -500,11 +512,13 @@
 
       v.ofertaActual = monto;
       v.ganadorActual = usuarioActual.email;
+      guardarDatos();
+
       alert("¡Oferta registrada con éxito!");
       renderCatalogo();
     }
 
-    // 7. FILTROS
+    // FILTROS
     function filtrarVehiculos() {
       const txt = document.getElementById('filter-text').value.toLowerCase();
       const comb = document.getElementById('filter-combust').value;
@@ -520,7 +534,7 @@
       renderCatalogo(filtrados);
     }
 
-    // 8. TEMPORIZADOR
+    // TEMPORIZADOR
     function formatTime(sec) {
       if (sec <= 0) return "CERRADO";
       const m = Math.floor(sec / 60);
@@ -538,7 +552,10 @@
           if (v.tiempoRestanteSec === 0) cambio = true;
         }
       });
-      if (cambio) renderCatalogo();
+      if (cambio) {
+        guardarDatos();
+        renderCatalogo();
+      }
     }, 1000);
 
     // Inicialización
