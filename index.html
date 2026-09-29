@@ -22,7 +22,7 @@
       <h2 class="text-lg font-bold mb-3 text-slate-800">Iniciar Sesión</h2>
       
       <div class="mb-3">
-        <label class="block text-xs font-bold text-gray-700 mb-1">Seleccionar Usuario o Ingresar Correo:</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Seleccionar Usuario de Prueba:</label>
         <select id="login-email" class="w-full border p-2 rounded text-sm bg-slate-50">
           <option value="comprador1@copart.com">comprador1@copart.com (Comprador A)</option>
           <option value="comprador2@copart.com">comprador2@copart.com (Comprador B)</option>
@@ -78,7 +78,7 @@
     </div>
   </div>
 
-  <!-- MODAL 3: PUBLICAR NUEVO VEHÍCULO (FICHA TÉCNICA) -->
+  <!-- MODAL 3: PUBLICAR NUEVO VEHÍCULO -->
   <div id="publicar-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full border max-h-[90vh] overflow-y-auto">
       <h2 class="text-lg font-bold mb-3 text-slate-800">Publicar Vehículo para Subasta</h2>
@@ -191,7 +191,7 @@
   </main>
 
   <script>
-    // 1. ESTADO GLOBAL Y USUARIOS REGISTRADOS
+    // 1. ESTADO GLOBAL
     let usuariosRegistrados = [
       { email: "comprador1@copart.com", nombre: "Juan" },
       { email: "comprador2@copart.com", nombre: "Maria" },
@@ -216,7 +216,8 @@
         montoBase: 20000,
         ofertaActual: 22000,
         ganadorActual: "comprador1@copart.com",
-        tiempoRestanteSec: 420,
+        publicador: "vendedor1@copart.com",
+        tiempoRestanteSec: 30, // 30 segundos de prueba para ver el cierre rápido
         imagenes: ["https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500"]
       },
       {
@@ -234,16 +235,16 @@
         montoBase: 35000,
         ofertaActual: 40000,
         ganadorActual: "comprador2@copart.com",
+        publicador: "vendedor1@copart.com",
         tiempoRestanteSec: 240,
         imagenes: ["https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?w=500"]
       }
     ];
 
-    // 2. FUNCIONES DE MODALES
+    // 2. MODALES Y AUTH
     function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    // 3. RENDERIZAR AUTENTICACIÓN
     function renderAuth() {
       const container = document.getElementById('user-info');
       if (usuarioActual.logueado) {
@@ -274,18 +275,15 @@
       const email = document.getElementById('reg-email').value;
 
       usuariosRegistrados.push({ email, nombre });
-
-      // Iniciar sesión con la nueva cuenta creada
       usuarioActual = { logueado: true, email: email };
       
-      // Agregar al selector desplegable de login
       const sel = document.getElementById('login-email');
       const opt = document.createElement('option');
       opt.value = email;
       opt.innerText = `${email} (${nombre})`;
       sel.appendChild(opt);
 
-      alert(`¡Cuenta creada con éxito para ${nombre}! Ha iniciado sesión automáticamente.`);
+      alert(`¡Cuenta creada con éxito! Ha iniciado sesión como ${email}`);
       cerrarModal('registro-modal');
       renderAuth();
       renderCatalogo();
@@ -297,7 +295,7 @@
       renderCatalogo();
     }
 
-    // 4. PUBLICAR NUEVO VEHÍCULO
+    // 3. PUBLICAR VEHÍCULO
     function publicarVehiculo(e) {
       e.preventDefault();
       const marca = document.getElementById('pub-marca').value;
@@ -324,17 +322,27 @@
         montoBase,
         ofertaActual: montoBase,
         ganadorActual: "",
-        tiempoRestanteSec: 600, // 10 Minutos
+        publicador: usuarioActual.email,
+        tiempoRestanteSec: 300, // 5 Minutos
         imagenes: [img]
       };
 
       vehiculos.unshift(nuevoVehiculo);
-      alert("¡Vehículo publicado en el inventario de subastas con éxito!");
+      alert("¡Vehículo publicado con éxito!");
       cerrarModal('publicar-modal');
       renderCatalogo();
     }
 
-    // 5. RENDERIZAR CATÁLOGO Y REGLAS DE NEGOCIO
+    // 4. ELIMINAR / MARCAR COMO VENDIDO EL VEHÍCULO
+    function eliminarVehiculo(id) {
+      if (confirm("¿Está seguro de que desea eliminar este vehículo del catálogo de subastas?")) {
+        vehiculos = vehiculos.filter(v => v.id !== id);
+        alert("El vehículo ha sido eliminado del catálogo.");
+        renderCatalogo();
+      }
+    }
+
+    // 5. RENDERIZAR CATÁLOGO
     function renderCatalogo(lista = vehiculos) {
       const container = document.getElementById('catalogo-container');
       container.innerHTML = "";
@@ -357,9 +365,23 @@
           }
         }
 
+        // Formulario o mensaje de Cierre / Vendido
         let formOferta = "";
         if (item.tiempoRestanteSec <= 0) {
-          formOferta = `<div class="bg-gray-200 text-gray-700 p-2 text-center rounded font-bold text-sm">OFERTA CERRADA</div>`;
+          if (item.ganadorActual !== "") {
+            formOferta = `
+              <div class="bg-green-600 text-white p-3 text-center rounded-md font-bold text-sm shadow mb-2">
+                🎉 VEHÍCULO VENDIDO
+              </div>
+              <p class="text-xs text-center text-gray-500">Subasta adjudicada por: <strong>Q. ${item.ofertaActual.toLocaleString()}</strong></p>
+            `;
+          } else {
+            formOferta = `
+              <div class="bg-gray-200 text-gray-700 p-2 text-center rounded font-bold text-sm">
+                SUBASTA DESIERTA / NO VENDIDA
+              </div>
+            `;
+          }
         } else if (usuarioActual.logueado) {
           formOferta = `
             <div class="flex gap-2">
@@ -371,6 +393,12 @@
           formOferta = `<p class="text-xs text-center text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">Debe <button onclick="abrirModal('login-modal')" class="underline font-bold text-blue-700">Iniciar Sesión</button> para ofertar.</p>`;
         }
 
+        // Botón de eliminar habilitado si el usuario inició sesión
+        let btnEliminar = "";
+        if (usuarioActual.logueado) {
+          btnEliminar = `<button onclick="eliminarVehiculo(${item.id})" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-2 py-1 rounded font-bold">🗑️ Eliminar</button>`;
+        }
+
         const card = document.createElement('div');
         card.className = "bg-white p-5 rounded-lg shadow-sm border";
         card.innerHTML = `
@@ -378,7 +406,10 @@
             <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold border ${item.dano.includes('Verde') ? 'bg-green-100 text-green-800 border-green-300' : item.dano.includes('Amarillo') ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-red-100 text-red-800 border-red-300'}">
               ${item.dano} - ${item.danoTexto}
             </span>
-            <span class="text-xs text-red-600 font-bold">⏱️ Tiempo: <span id="timer-${item.id}">${formatTime(item.tiempoRestanteSec)}</span></span>
+            <div class="flex items-center gap-2">
+              ${btnEliminar}
+              <span class="text-xs text-red-600 font-bold">⏱️ <span id="timer-${item.id}">${formatTime(item.tiempoRestanteSec)}</span></span>
+            </div>
           </div>
 
           <h3 class="text-lg font-bold text-gray-900">${item.marca} ${item.modelo} ${item.anio}</h3>
@@ -418,7 +449,7 @@
       renderCatalogo();
     }
 
-    // 7. FILTROS MULTITAREA
+    // 7. FILTROS
     function filtrarVehiculos() {
       const txt = document.getElementById('filter-text').value.toLowerCase();
       const comb = document.getElementById('filter-combust').value;
@@ -434,7 +465,7 @@
       renderCatalogo(filtrados);
     }
 
-    // 8. TEMPORIZADOR
+    // 8. TEMPORIZADOR Y AUTOCIERRE
     function formatTime(sec) {
       if (sec <= 0) return "CERRADO";
       const m = Math.floor(sec / 60);
@@ -443,13 +474,16 @@
     }
 
     setInterval(() => {
+      let cambio = false;
       vehiculos.forEach(v => {
         if (v.tiempoRestanteSec > 0) {
           v.tiempoRestanteSec--;
           const el = document.getElementById(`timer-${v.id}`);
           if (el) el.innerText = formatTime(v.tiempoRestanteSec);
+          if (v.tiempoRestanteSec === 0) cambio = true;
         }
       });
+      if (cambio) renderCatalogo();
     }, 1000);
 
     // Inicialización
