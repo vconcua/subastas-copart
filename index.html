@@ -12,11 +12,38 @@
   <header class="flex flex-wrap justify-between items-center bg-white p-4 shadow-sm rounded-lg mb-6 border gap-3">
     <h1 class="text-xl font-bold text-blue-800">🚗 Subastas Copart (Tiempo Real)</h1>
     <div id="user-info" class="flex items-center gap-3">
-      <!-- Se actualiza por JavaScript -->
+      <!-- Se renderiza por JS -->
     </div>
   </header>
 
-  <!-- Panel de Filtros -->
+  <!-- Modal / Ventana de Login -->
+  <div id="login-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full border">
+      <h2 class="text-lg font-bold mb-3 text-slate-800">Iniciar Sesión</h2>
+      <p class="text-xs text-slate-500 mb-4">Seleccione o ingrese un usuario de prueba:</p>
+      
+      <div class="mb-3">
+        <label class="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico:</label>
+        <select id="login-email" class="w-full border p-2 rounded text-sm bg-slate-50">
+          <option value="comprador1@copart.com">comprador1@copart.com (Comprador A)</option>
+          <option value="comprador2@copart.com">comprador2@copart.com (Comprador B)</option>
+          <option value="vendedor1@copart.com">vendedor1@copart.com (Vendedor / Publicador)</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña:</label>
+        <input type="password" value="Password123!" class="w-full border p-2 rounded text-sm bg-slate-50" readonly>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="ejecutarLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded text-sm font-bold">Ingresar</button>
+        <button onclick="cerrarModalLogin()" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Filtros Multitarea -->
   <section class="bg-white p-4 rounded-lg shadow-sm border mb-6">
     <h2 class="font-bold text-gray-700 mb-3 text-sm">Filtros Multitarea</h2>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -43,8 +70,8 @@
   </main>
 
   <script>
-    // 1. ESTADO GLOBAL DE LA APLICACIÓN
-    let usuarioActual = { logueado: true, email: "comprador1@copart.com", nombre: "Juan Pérez" };
+    // 1. ESTADO GLOBAL (Inicia como Anónimo / No Autenticado por defecto)
+    let usuarioActual = { logueado: false, email: "" };
 
     let vehiculos = [
       {
@@ -61,12 +88,9 @@
         danoTexto: "Daño Menor / Limpio",
         montoBase: 20000,
         ofertaActual: 22000,
-        ganadorActual: "comprador1@copart.com", // El usuario logueado va ganando
-        tiempoRestanteSec: 320,
-        imagenes: [
-          "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500",
-          "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=500"
-        ]
+        ganadorActual: "comprador1@copart.com",
+        tiempoRestanteSec: 420,
+        imagenes: ["https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500"]
       },
       {
         id: 2,
@@ -82,46 +106,59 @@
         danoTexto: "Daño Medio / Reparable",
         montoBase: 35000,
         ofertaActual: 40000,
-        ganadorActual: "comprador2@copart.com", // Oferta superada por otro
-        tiempoRestanteSec: 180,
-        imagenes: [
-          "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?w=500"
-        ]
+        ganadorActual: "comprador2@copart.com",
+        tiempoRestanteSec: 240,
+        imagenes: ["https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?w=500"]
       }
     ];
 
-    // 2. RENDERIZAR AUTENTICACIÓN
+    // 2. GESTIÓN DE AUTENTICACIÓN Y MODAL
     function renderAuth() {
       const container = document.getElementById('user-info');
       if (usuarioActual.logueado) {
         container.innerHTML = `
-          <span class="text-xs md:text-sm text-gray-600">Sesión: <strong class="text-blue-600">${usuarioActual.email}</strong></span>
-          <button onclick="toggleAuth()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-1.5 text-xs rounded-md font-semibold">Cerrar Sesión</button>
+          <span class="text-xs md:text-sm text-gray-600">Usuario: <strong class="text-blue-600">${usuarioActual.email}</strong></span>
+          <button onclick="cerrarSesion()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 text-xs rounded-md font-semibold">Cerrar Sesión</button>
         `;
       } else {
         container.innerHTML = `
-          <span class="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">Modo Lectura (Visitante Anónimo)</span>
-          <button onclick="toggleAuth()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs rounded-md font-semibold">Iniciar Sesión</button>
+          <span class="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">Visitante Anónimo (Solo Lectura)</span>
+          <button onclick="abrirModalLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 text-xs rounded-md font-semibold">Iniciar Sesión</button>
         `;
       }
     }
 
-    function toggleAuth() {
-      usuarioActual.logueado = !usuarioActual.logueado;
+    function abrirModalLogin() {
+      document.getElementById('login-modal').classList.remove('hidden');
+    }
+
+    function cerrarModalLogin() {
+      document.getElementById('login-modal').classList.add('hidden');
+    }
+
+    function ejecutarLogin() {
+      const selEmail = document.getElementById('login-email').value;
+      usuarioActual = { logueado: true, email: selEmail };
+      cerrarModalLogin();
       renderAuth();
       renderCatalogo();
     }
 
-    // 3. RENDERIZAR TARJETAS Y REGLAS DE NEGOCIO
+    function cerrarSesion() {
+      usuarioActual = { logueado: false, email: "" };
+      renderAuth();
+      renderCatalogo();
+    }
+
+    // 3. RENDERIZADO DEL CATÁLOGO
     function renderCatalogo(lista = vehiculos) {
       const container = document.getElementById('catalogo-container');
       container.innerHTML = "";
 
       lista.forEach(item => {
-        // Regla: Oferta mínima +10%
         const minValida = Math.ceil(item.ofertaActual * 1.10);
 
-        // Indicador Visual en Tiempo Real (Badge)
+        // Indicador Visual (Badge)
         let badgeHtml = "";
         if (usuarioActual.logueado) {
           if (item.ganadorActual === usuarioActual.email) {
@@ -135,7 +172,7 @@
           }
         }
 
-        // Formulario o bloqueo si no está autenticado
+        // Formulario de Oferta
         let formOferta = "";
         if (item.tiempoRestanteSec <= 0) {
           formOferta = `<div class="bg-gray-200 text-gray-700 p-2 text-center rounded font-bold text-sm">OFERTA CERRADA</div>`;
@@ -147,7 +184,7 @@
             </div>
           `;
         } else {
-          formOferta = `<p class="text-xs text-center text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">Debe <strong>Iniciar Sesión</strong> para poder ofertar en este vehículo.</p>`;
+          formOferta = `<p class="text-xs text-center text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">Debe <button onclick="abrirModalLogin()" class="underline font-bold text-blue-700">Iniciar Sesión</button> para poder ofertar.</p>`;
         }
 
         const card = document.createElement('div');
@@ -177,34 +214,24 @@
       });
     }
 
-    // 4. LÓGICA DE PUJA Y VALIDACIONES
+    // 4. LÓGICA DE PUJA (+10%)
     function realizarOferta(id) {
       const v = vehiculos.find(x => x.id === id);
       const input = document.getElementById(`input-oferta-${id}`);
       const monto = parseFloat(input.value);
       const minValido = v.ofertaActual * 1.10;
 
-      if (isNaN(monto)) {
-        alert("Por favor ingrese un monto válido.");
-        return;
-      }
-      if (monto < v.montoBase) {
-        alert(`La oferta no puede ser menor al precio base (Q. ${v.montoBase.toLocaleString()}).`);
-        return;
-      }
-      if (monto < minValido) {
-        alert(`Regla +10%: Toda nueva oferta debe superar la actual por al menos 10%. Monto mínimo: Q. ${Math.ceil(minValido).toLocaleString()}`);
-        return;
-      }
+      if (isNaN(monto)) return alert("Por favor ingrese un monto válido.");
+      if (monto < v.montoBase) return alert(`La oferta no puede ser menor al precio base (Q. ${v.montoBase.toLocaleString()}).`);
+      if (monto < minValido) return alert(`Regla +10%: La oferta debe ser al menos de Q. ${Math.ceil(minValido).toLocaleString()}`);
 
-      // Actualización en tiempo real de la subasta
       v.ofertaActual = monto;
       v.ganadorActual = usuarioActual.email;
       alert("¡Oferta registrada con éxito!");
       renderCatalogo();
     }
 
-    // 5. FILTROS MULTITAREA
+    // 5. FILTROS
     function filtrarVehiculos() {
       const txt = document.getElementById('filter-text').value.toLowerCase();
       const comb = document.getElementById('filter-combust').value;
@@ -238,7 +265,7 @@
       });
     }, 1000);
 
-    // Inicialización al cargar la página
+    // Inicialización (Comienza en modo anónimo)
     renderAuth();
     renderCatalogo();
   </script>
