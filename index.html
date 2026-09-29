@@ -24,8 +24,13 @@
       <div class="mb-3">
         <label class="block text-xs font-bold text-gray-700 mb-1">Seleccionar Usuario de Prueba:</label>
         <select id="login-email" class="w-full border p-2 rounded text-sm bg-slate-50">
-          <!-- Opciones dinámicas cargadas desde localStorage sin guardar contraseñas -->
+          <!-- Opciones dinámicas cargadas desde localStorage -->
         </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña:</label>
+        <input type="password" value="Password123!" class="w-full border p-2 rounded text-sm bg-slate-50" readonly>
       </div>
 
       <div class="flex gap-2 mb-3">
@@ -36,7 +41,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: REGISTRO DE NUEVO COMPRADOR (SIN ALMACENAR CONTRASEÑA) -->
+  <!-- MODAL 2: REGISTRO DE NUEVO COMPRADOR -->
   <div id="registro-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full border max-h-[90vh] overflow-y-auto">
       <h2 class="text-lg font-bold mb-3 text-slate-800">Registro de Nuevo Comprador/Usuario</h2>
@@ -59,7 +64,11 @@
           <label class="block text-xs font-bold text-gray-700 mb-1">Teléfono:</label>
           <input id="reg-telefono" type="tel" required placeholder="+502 1234-5678" class="w-full border p-2 rounded text-sm">
         </div>
-        <div class="flex gap-2 mt-4">
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña Segura:</label>
+          <input id="reg-password" type="password" required class="w-full border p-2 rounded text-sm">
+        </div>
+        <div class="flex gap-2">
           <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded text-sm font-bold">Crear Cuenta</button>
           <button type="button" onclick="cerrarModal('registro-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
         </div>
@@ -185,7 +194,7 @@
   </main>
 
   <script>
-    // DATOS INICIALES (SOLO NOMBRE Y EMAIL)
+    // DATOS INICIALES POR DEFECTO
     const defaultUsuarios = [
       { email: "comprador1@copart.com", nombre: "Juan Pérez" },
       { email: "comprador2@copart.com", nombre: "María López" },
@@ -247,13 +256,12 @@
       }
     ];
 
-    // CARGAR DESDE LOCALSTORAGE O DEFAULT
+    // CARGAR DESDE LOCALSTORAGE O USAR DEFECTO
     let usuariosRegistrados = JSON.parse(localStorage.getItem('copart_usuarios')) || defaultUsuarios;
     let vehiculos = JSON.parse(localStorage.getItem('copart_vehiculos')) || defaultVehiculos;
     let usuarioActual = JSON.parse(localStorage.getItem('copart_sesion')) || { logueado: false, email: "" };
 
     function guardarDatos() {
-      // Guarda los perfiles sin almacenar ninguna clave
       localStorage.setItem('copart_usuarios', JSON.stringify(usuariosRegistrados));
       localStorage.setItem('copart_vehiculos', JSON.stringify(vehiculos));
       localStorage.setItem('copart_sesion', JSON.stringify(usuarioActual));
@@ -300,20 +308,17 @@
       renderCatalogo();
     }
 
-    // REGISTRO SIN GUARDAR CONTRASEÑA
     function registrarUsuario(e) {
       e.preventDefault();
       const nombre = document.getElementById('reg-nombre').value;
-      const apellido = document.getElementById('reg-apellido').value;
       const email = document.getElementById('reg-email').value;
 
-      // Guarda únicamente los datos públicos/de perfil
-      usuariosRegistrados.push({ email, nombre: `${nombre} ${apellido}` });
+      usuariosRegistrados.push({ email, nombre });
       usuarioActual = { logueado: true, email: email };
       
       guardarDatos();
 
-      alert(`¡Cuenta registrada exitosamente para ${nombre} ${apellido}!`);
+      alert(`¡Cuenta creada con éxito! Ha iniciado sesión como ${email}`);
       cerrarModal('registro-modal');
       renderAuth();
       renderCatalogo();
