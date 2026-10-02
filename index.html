@@ -11,7 +11,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Configuración Pública de Base de Datos en Tiempo Real
     const firebaseConfig = {
       databaseURL: "https://fir-signos-vitales-default-rtdb.firebaseio.com"
     };
@@ -30,7 +29,6 @@
       if (data) {
         window.vehiculos = data;
       } else {
-        // Inicializar datos semilla si la BD está vacía
         window.vehiculos = defaultVehiculos;
         set(ref(db, 'subastas_copart'), defaultVehiculos);
       }
@@ -346,7 +344,6 @@
       window.renderCatalogo();
     }
 
-    // PUBLICAR VEHÍCULO EN TIEMPO REAL A FIREBASE
     function publicarVehiculo(e) {
       e.preventDefault();
       const marca = document.getElementById('pub-marca').value;
@@ -388,7 +385,6 @@
       let listaActual = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
       listaActual.unshift(nuevoVehiculo);
 
-      // Sincronizar instantáneamente en la nube
       window.dbSet(window.dbRef, listaActual);
 
       alert("¡Vehículo publicado globalmente en tiempo real!");
@@ -418,15 +414,26 @@
       }
     }
 
+    // ELIMINACIÓN RESTRINGIDA AL CREADOR/PUBLICADOR
     function eliminarVehiculo(id) {
-      if (confirm("¿Desea eliminar este vehículo del catálogo global?")) {
-        let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
-        const listaFiltrada = lista.filter(v => v.id !== id);
+      let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+      const v = lista.find(x => x.id === id);
+
+      if (!v) return;
+
+      // Validación de Seguridad: Verificar si el usuario logueado es el publicador original
+      if (usuarioActual.email !== v.publicador) {
+        alert("🔒 Acción denegada: Únicamente el vendedor que publicó este vehículo (" + v.publicador + ") tiene permisos para eliminarlo.");
+        return;
+      }
+
+      if (confirm("¿Desea eliminar su publicación del catálogo global?")) {
+        const listaFiltrada = lista.filter(x => x.id !== id);
         window.dbSet(window.dbRef, listaFiltrada);
       }
     }
 
-    // RENDERIZAR CATÁLOGO SINCRO
+    // RENDERIZAR CATÁLOGO
     window.renderCatalogo = function(lista = window.vehiculos) {
       const container = document.getElementById('catalogo-container');
       if (!container) return;
@@ -472,9 +479,10 @@
           formOferta = `<p class="text-xs text-center text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">Debe <button onclick="abrirModal('login-modal')" class="underline font-bold text-blue-700">Iniciar Sesión</button> para ofertar.</p>`;
         }
 
+        // MOSTRAR BOTÓN DE ELIMINAR SOLAMENTE SI ES EL CREADOR DE LA PUBLICACIÓN
         let btnEliminar = "";
-        if (usuarioActual.logueado) {
-          btnEliminar = `<button onclick="eliminarVehiculo('${item.id}')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-2 py-1 rounded font-bold">🗑️ Eliminar</button>`;
+        if (usuarioActual.logueado && usuarioActual.email === item.publicador) {
+          btnEliminar = `<button onclick="eliminarVehiculo('${item.id}')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-2 py-1 rounded font-bold">🗑️ Eliminar mi publicación</button>`;
         }
 
         const fotosThumbnails = item.imagenes.map((imgUrl, idx) => 
@@ -495,7 +503,8 @@
           </div>
 
           <h3 class="text-lg font-bold text-gray-900">${item.marca} ${item.modelo} ${item.anio}</h3>
-          <p class="text-xs text-gray-500 mb-3">Motor: ${item.motor} | Transmisión: ${item.transmision} | Combustible: ${item.combustible} | Tren: ${item.tren} (${item.cilindros} Cil.)</p>
+          <p class="text-xs text-gray-500 mb-1">Motor: ${item.motor} | Transmisión: ${item.transmision} | Combustible: ${item.combustible} | Tren: ${item.tren} (${item.cilindros} Cil.)</p>
+          <p class="text-[11px] text-slate-400 mb-3">Vendedor: <strong class="text-slate-600">${item.publicador}</strong></p>
 
           <!-- CARRUSEL -->
           <div class="relative w-full h-48 bg-slate-900 rounded-md mb-2 overflow-hidden">
@@ -523,7 +532,6 @@
       });
     };
 
-    // OFERTAR SINCRO EN TIEMPO REAL
     function realizarOferta(id) {
       let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
       const v = lista.find(x => x.id === id);
@@ -541,7 +549,6 @@
       v.ofertaActual = monto;
       v.ganadorActual = usuarioActual.email;
 
-      // Publicar cambio de oferta a Firebase (Lo ven todos los navegadores al instante)
       window.dbSet(window.dbRef, lista);
     }
 
