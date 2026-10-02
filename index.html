@@ -5,12 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Subastas Copart - Examen WebDev 2026</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Módulos Oficiales de Firebase Realtime Database (Tiempo Real Global) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Configuración Pública de Base de Datos en Tiempo Real
+    const firebaseConfig = {
+      databaseURL: "https://fir-signos-vitales-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    window.dbRef = ref(db, 'subastas_copart');
+    window.dbSet = set;
+    window.dbUpdate = update;
+    window.db = db;
+    window.ref = ref;
+
+    // Escuchar cambios de subasta en TIEMPO REAL a todos los navegadores conectados
+    onValue(window.dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        window.vehiculos = data;
+      } else {
+        // Inicializar datos semilla si la BD está vacía
+        window.vehiculos = defaultVehiculos;
+        set(ref(db, 'subastas_copart'), defaultVehiculos);
+      }
+      window.renderCatalogo();
+    });
+  </script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans p-4 md:p-6">
 
   <!-- Header / Autenticación -->
   <header class="flex flex-wrap justify-between items-center bg-white p-4 shadow-sm rounded-lg mb-6 border gap-3">
-    <h1 class="text-xl font-bold text-blue-800">🚗 Subastas Copart (Tiempo Real)</h1>
+    <h1 class="text-xl font-bold text-blue-800">🚗 Subastas Copart (Tiempo Real Global)</h1>
     <div id="user-info" class="flex items-center gap-2">
       <!-- Se renderiza por JS -->
     </div>
@@ -21,22 +53,22 @@
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full border">
       <h2 class="text-lg font-bold mb-3 text-slate-800">Iniciar Sesión</h2>
       
-      <div class="mb-3">
-        <label class="block text-xs font-bold text-gray-700 mb-1">Seleccionar Usuario de Prueba:</label>
-        <select id="login-email" class="w-full border p-2 rounded text-sm bg-slate-50">
-          <!-- Opciones dinámicas cargadas desde localStorage -->
-        </select>
-      </div>
+      <form onsubmit="ejecutarLogin(event)">
+        <div class="mb-3">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Correo Electrónico:</label>
+          <input id="login-email-input" type="email" required placeholder="ejemplo@copart.com" class="w-full border p-2 rounded text-sm bg-slate-50">
+        </div>
 
-      <div class="mb-4">
-        <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña:</label>
-        <input type="password" value="Password123!" class="w-full border p-2 rounded text-sm bg-slate-50" readonly>
-      </div>
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña:</label>
+          <input id="login-password-input" type="password" required placeholder="••••••••" class="w-full border p-2 rounded text-sm bg-slate-50">
+        </div>
 
-      <div class="flex gap-2 mb-3">
-        <button onclick="ejecutarLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded text-sm font-bold">Ingresar</button>
-        <button onclick="cerrarModal('login-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
-      </div>
+        <div class="flex gap-2 mb-3">
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded text-sm font-bold">Ingresar</button>
+          <button type="button" onclick="cerrarModal('login-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
+        </div>
+      </form>
       <p class="text-xs text-center text-gray-500">¿No tienes cuenta? <button onclick="cerrarModal('login-modal'); abrirModal('registro-modal');" class="text-blue-600 underline font-bold">Regístrate aquí</button></p>
     </div>
   </div>
@@ -68,7 +100,7 @@
           <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña Segura:</label>
           <input id="reg-password" type="password" required class="w-full border p-2 rounded text-sm">
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 mt-4">
           <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded text-sm font-bold">Crear Cuenta</button>
           <button type="button" onclick="cerrarModal('registro-modal')" class="w-full bg-gray-200 text-gray-700 p-2 rounded text-sm font-bold">Cancelar</button>
         </div>
@@ -194,16 +226,9 @@
   </main>
 
   <script>
-    // DATOS INICIALES POR DEFECTO
-    const defaultUsuarios = [
-      { email: "comprador1@copart.com", nombre: "Juan Pérez" },
-      { email: "comprador2@copart.com", nombre: "María López" },
-      { email: "vendedor1@copart.com", nombre: "Carlos Gómez" }
-    ];
-
     const defaultVehiculos = [
       {
-        id: 1,
+        id: "v1",
         marca: "Toyota",
         modelo: "Tacoma SR5",
         anio: 2022,
@@ -218,7 +243,7 @@
         ofertaActual: 22000,
         ganadorActual: "comprador1@copart.com",
         publicador: "vendedor1@copart.com",
-        tiempoRestanteSec: 600,
+        tiempoRestanteSec: 1200,
         fotoIndex: 0,
         imagenes: [
           "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500",
@@ -229,7 +254,7 @@
         ]
       },
       {
-        id: 2,
+        id: "v2",
         marca: "Ford",
         modelo: "Mustang GT",
         anio: 2020,
@@ -244,7 +269,7 @@
         ofertaActual: 40000,
         ganadorActual: "comprador2@copart.com",
         publicador: "vendedor1@copart.com",
-        tiempoRestanteSec: 900,
+        tiempoRestanteSec: 1500,
         fotoIndex: 0,
         imagenes: [
           "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?w=500",
@@ -256,34 +281,13 @@
       }
     ];
 
-    // CARGAR DESDE LOCALSTORAGE O USAR DEFECTO
-    let usuariosRegistrados = JSON.parse(localStorage.getItem('copart_usuarios')) || defaultUsuarios;
-    let vehiculos = JSON.parse(localStorage.getItem('copart_vehiculos')) || defaultVehiculos;
-    let usuarioActual = JSON.parse(localStorage.getItem('copart_sesion')) || { logueado: false, email: "" };
+    window.vehiculos = defaultVehiculos;
+    let usuarioActual = JSON.parse(sessionStorage.getItem('copart_sesion')) || { logueado: false, email: "" };
 
-    function guardarDatos() {
-      localStorage.setItem('copart_usuarios', JSON.stringify(usuariosRegistrados));
-      localStorage.setItem('copart_vehiculos', JSON.stringify(vehiculos));
-      localStorage.setItem('copart_sesion', JSON.stringify(usuarioActual));
-    }
-
-    // MODALES
     function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    function actualizarSelectUsuarios() {
-      const sel = document.getElementById('login-email');
-      sel.innerHTML = "";
-      usuariosRegistrados.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.email;
-        opt.innerText = `${u.email} (${u.nombre})`;
-        sel.appendChild(opt);
-      });
-    }
-
     function renderAuth() {
-      actualizarSelectUsuarios();
       const container = document.getElementById('user-info');
       if (usuarioActual.logueado) {
         container.innerHTML = `
@@ -299,39 +303,50 @@
       }
     }
 
-    function ejecutarLogin() {
-      const selEmail = document.getElementById('login-email').value;
-      usuarioActual = { logueado: true, email: selEmail };
-      guardarDatos();
+    function ejecutarLogin(e) {
+      e.preventDefault();
+      const emailInput = document.getElementById('login-email-input').value.trim();
+      const passwordInput = document.getElementById('login-password-input').value.trim();
+
+      if (!emailInput || !passwordInput) {
+        alert("Por favor ingrese correo y contraseña.");
+        return;
+      }
+
+      usuarioActual = { logueado: true, email: emailInput };
+      sessionStorage.setItem('copart_sesion', JSON.stringify(usuarioActual));
       cerrarModal('login-modal');
+      
+      document.getElementById('login-email-input').value = "";
+      document.getElementById('login-password-input').value = "";
+
       renderAuth();
-      renderCatalogo();
+      window.renderCatalogo();
     }
 
     function registrarUsuario(e) {
       e.preventDefault();
       const nombre = document.getElementById('reg-nombre').value;
+      const apellido = document.getElementById('reg-apellido').value;
       const email = document.getElementById('reg-email').value;
 
-      usuariosRegistrados.push({ email, nombre });
       usuarioActual = { logueado: true, email: email };
-      
-      guardarDatos();
+      sessionStorage.setItem('copart_sesion', JSON.stringify(usuarioActual));
 
-      alert(`¡Cuenta creada con éxito! Ha iniciado sesión como ${email}`);
+      alert(`¡Cuenta registrada exitosamente para ${nombre} ${apellido}!`);
       cerrarModal('registro-modal');
       renderAuth();
-      renderCatalogo();
+      window.renderCatalogo();
     }
 
     function cerrarSesion() {
       usuarioActual = { logueado: false, email: "" };
-      guardarDatos();
+      sessionStorage.setItem('copart_sesion', JSON.stringify(usuarioActual));
       renderAuth();
-      renderCatalogo();
+      window.renderCatalogo();
     }
 
-    // PUBLICAR VEHÍCULO PERSISTENTE
+    // PUBLICAR VEHÍCULO EN TIEMPO REAL A FIREBASE
     function publicarVehiculo(e) {
       e.preventDefault();
       const marca = document.getElementById('pub-marca').value;
@@ -355,8 +370,9 @@
       if (danoVal.includes("Amarillo")) danoTexto = "Daño Medio / Reparable";
       if (danoVal.includes("Rojo")) danoTexto = "Daño Severo / Salvamento";
 
+      const nuevoId = "v_" + Date.now();
       const nuevoVehiculo = {
-        id: Date.now(),
+        id: nuevoId,
         marca, modelo, anio, motor, transmision, combustible, tren, cilindros,
         dano: danoVal,
         danoTexto,
@@ -369,18 +385,21 @@
         imagenes: [img1, img2, img3, img4, img5]
       };
 
-      vehiculos.unshift(nuevoVehiculo);
-      guardarDatos();
+      let listaActual = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+      listaActual.unshift(nuevoVehiculo);
 
-      alert("¡Vehículo publicado y guardado exitosamente!");
+      // Sincronizar instantáneamente en la nube
+      window.dbSet(window.dbRef, listaActual);
+
+      alert("¡Vehículo publicado globalmente en tiempo real!");
       cerrarModal('publicar-modal');
-      renderCatalogo();
     }
 
     function cambiarFoto(id, direccion) {
-      const v = vehiculos.find(x => x.id === id);
+      let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+      const v = lista.find(x => x.id === id);
       if (v) {
-        v.fotoIndex += direccion;
+        v.fotoIndex = (v.fotoIndex || 0) + direccion;
         if (v.fotoIndex < 0) v.fotoIndex = v.imagenes.length - 1;
         if (v.fotoIndex >= v.imagenes.length) v.fotoIndex = 0;
         
@@ -390,7 +409,8 @@
     }
 
     function seleccionarFotoDirecta(id, idx) {
-      const v = vehiculos.find(x => x.id === id);
+      let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+      const v = lista.find(x => x.id === id);
       if (v) {
         v.fotoIndex = idx;
         document.getElementById(`car-img-${id}`).src = v.imagenes[v.fotoIndex];
@@ -399,20 +419,22 @@
     }
 
     function eliminarVehiculo(id) {
-      if (confirm("¿Desea eliminar este vehículo del catálogo permanente?")) {
-        vehiculos = vehiculos.filter(v => v.id !== id);
-        guardarDatos();
-        alert("El vehículo ha sido eliminado.");
-        renderCatalogo();
+      if (confirm("¿Desea eliminar este vehículo del catálogo global?")) {
+        let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+        const listaFiltrada = lista.filter(v => v.id !== id);
+        window.dbSet(window.dbRef, listaFiltrada);
       }
     }
 
-    // CATÁLOGO
-    function renderCatalogo(lista = vehiculos) {
+    // RENDERIZAR CATÁLOGO SINCRO
+    window.renderCatalogo = function(lista = window.vehiculos) {
       const container = document.getElementById('catalogo-container');
+      if (!container) return;
       container.innerHTML = "";
 
-      lista.forEach(item => {
+      let arrayVehiculos = Array.isArray(lista) ? lista : Object.values(lista);
+
+      arrayVehiculos.forEach(item => {
         if (item.fotoIndex === undefined) item.fotoIndex = 0;
 
         const minValida = item.ofertaActual === item.montoBase && item.ganadorActual === "" 
@@ -443,7 +465,7 @@
           formOferta = `
             <div class="flex gap-2">
               <input id="input-oferta-${item.id}" type="number" min="${minValida}" placeholder="Min Q. ${minValida.toLocaleString()}" class="border p-2 rounded-md w-full text-sm">
-              <button onclick="realizarOferta(${item.id})" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-bold text-sm">Ofertar</button>
+              <button onclick="realizarOferta('${item.id}')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-bold text-sm">Ofertar</button>
             </div>
           `;
         } else {
@@ -452,11 +474,11 @@
 
         let btnEliminar = "";
         if (usuarioActual.logueado) {
-          btnEliminar = `<button onclick="eliminarVehiculo(${item.id})" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-2 py-1 rounded font-bold">🗑️ Eliminar</button>`;
+          btnEliminar = `<button onclick="eliminarVehiculo('${item.id}')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-2 py-1 rounded font-bold">🗑️ Eliminar</button>`;
         }
 
         const fotosThumbnails = item.imagenes.map((imgUrl, idx) => 
-          `<img src="${imgUrl}" onclick="seleccionarFotoDirecta(${item.id}, ${idx})" class="w-10 h-8 object-cover rounded cursor-pointer border hover:opacity-80">`
+          `<img src="${imgUrl}" onclick="seleccionarFotoDirecta('${item.id}', ${idx})" class="w-10 h-8 object-cover rounded cursor-pointer border hover:opacity-80">`
         ).join('');
 
         const card = document.createElement('div');
@@ -478,8 +500,8 @@
           <!-- CARRUSEL -->
           <div class="relative w-full h-48 bg-slate-900 rounded-md mb-2 overflow-hidden">
             <img id="car-img-${item.id}" src="${item.imagenes[item.fotoIndex]}" alt="${item.modelo}" class="w-full h-full object-cover">
-            <button onclick="cambiarFoto(${item.id}, -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white p-1.5 rounded-full text-xs font-bold">◀</button>
-            <button onclick="cambiarFoto(${item.id}, 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white p-1.5 rounded-full text-xs font-bold">▶</button>
+            <button onclick="cambiarFoto('${item.id}', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white p-1.5 rounded-full text-xs font-bold">◀</button>
+            <button onclick="cambiarFoto('${item.id}', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black text-white p-1.5 rounded-full text-xs font-bold">▶</button>
             <span id="car-num-${item.id}" class="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
               ${item.fotoIndex + 1}/${item.imagenes.length}
             </span>
@@ -499,11 +521,12 @@
         `;
         container.appendChild(card);
       });
-    }
+    };
 
-    // OFERTAR
+    // OFERTAR SINCRO EN TIEMPO REAL
     function realizarOferta(id) {
-      const v = vehiculos.find(x => x.id === id);
+      let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+      const v = lista.find(x => x.id === id);
       const input = document.getElementById(`input-oferta-${id}`);
       const monto = parseFloat(input.value);
 
@@ -517,29 +540,28 @@
 
       v.ofertaActual = monto;
       v.ganadorActual = usuarioActual.email;
-      guardarDatos();
 
-      alert("¡Oferta registrada con éxito!");
-      renderCatalogo();
+      // Publicar cambio de oferta a Firebase (Lo ven todos los navegadores al instante)
+      window.dbSet(window.dbRef, lista);
     }
 
-    // FILTROS
     function filtrarVehiculos() {
       const txt = document.getElementById('filter-text').value.toLowerCase();
       const comb = document.getElementById('filter-combust').value;
       const dano = document.getElementById('filter-dano').value;
 
-      const filtrados = vehiculos.filter(v => {
+      let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+
+      const filtrados = lista.filter(v => {
         const matchTxt = v.marca.toLowerCase().includes(txt) || v.modelo.toLowerCase().includes(txt);
         const matchComb = comb === "" || v.combustible === comb;
         const matchDano = dano === "" || v.dano === dano;
         return matchTxt && matchComb && matchDano;
       });
 
-      renderCatalogo(filtrados);
+      window.renderCatalogo(filtrados);
     }
 
-    // TEMPORIZADOR
     function formatTime(sec) {
       if (sec <= 0) return "CERRADO";
       const m = Math.floor(sec / 60);
@@ -548,24 +570,17 @@
     }
 
     setInterval(() => {
-      let cambio = false;
-      vehiculos.forEach(v => {
+      let lista = Array.isArray(window.vehiculos) ? window.vehiculos : Object.values(window.vehiculos);
+      lista.forEach(v => {
         if (v.tiempoRestanteSec > 0) {
           v.tiempoRestanteSec--;
           const el = document.getElementById(`timer-${v.id}`);
           if (el) el.innerText = formatTime(v.tiempoRestanteSec);
-          if (v.tiempoRestanteSec === 0) cambio = true;
         }
       });
-      if (cambio) {
-        guardarDatos();
-        renderCatalogo();
-      }
     }, 1000);
 
-    // Inicialización
     renderAuth();
-    renderCatalogo();
   </script>
 </body>
 </html>
